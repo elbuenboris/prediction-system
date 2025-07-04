@@ -33,3 +33,11 @@ Cuando termines de trabajar, puedes salir del entorno virtual con:
 ```bash
 deactivate
 ```
+
+## Scripts
+
+### Generar fake_orders.csv
+
+```bash
+(venv) python src/scripts/generate_fake_orders.py
+```
