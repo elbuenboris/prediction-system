@@ -40,4 +40,17 @@ deactivate
 
 ```bash
 (venv) python src/scripts/generate_fake_orders.py
+
+```
+
+## Correr servidor localmente
+
+```bash
+uvicorn src.main:app --reload
+```
+
+## Sincronizar librerias de venv en requirements.txt
+
+```bash
+pip freeze > requirements.txt
 ```
