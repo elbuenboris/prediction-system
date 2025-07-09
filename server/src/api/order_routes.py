@@ -44,3 +44,34 @@ def create_order(data: Dict[str, Any]):
         return {"error": str(e)}
     finally:
         db.close()
+
+
+@router.get("/order/{order_id}")
+def get_order_by_id(order_id: str):
+    db = get_db_session()
+
+    print(f"Order id: {order_id}")
+
+    try:
+        order = OrderRepository.get_order_by_id(db, order_id)
+        if order:
+            return {"message": "Order filtered succesfully", "order": order.to_dict()}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        db.close()
+
+@router.get("/order")
+def get_orders():
+    db = get_db_session()
+
+    try:
+        orders = OrderRepository.get_orders(db)
+        return {
+                "message": "Orders retrieved successfully",
+                "orders": [order.to_dict() for order in orders]
+            }
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        db.close()

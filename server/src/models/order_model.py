@@ -48,7 +48,7 @@ class Order(Base):
             "order_date": self.order_date.isoformat(),
             "required_ship_date": self.required_ship_date.isoformat(),
             "expected_delivery_date": self.expected_delivery_date.isoformat(),
-            "actual_delivery_date": self.actual_delivery_date.isoformat(),
+            "actual_delivery_date": self.actual_delivery_date.isoformat() if self.actual_delivery_date else None,
             "quantity": self.quantity,
             "unit_price": self.unit_price,
             "sale_price": self.sale_price,

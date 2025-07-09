@@ -52,6 +52,7 @@ class OrderRepository:
         try:
             # Obtener una orden por su ID
             order = db.query(Order).filter(Order.id == order_id).first()
+            print(f"order: {order}")
             return order
         except Exception as e:
             print(f"Error retrieving order by ID: {e}")
