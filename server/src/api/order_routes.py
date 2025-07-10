@@ -1,15 +1,14 @@
 from fastapi import APIRouter
 from typing import Dict, Any
 from datetime import datetime
-from src.models.order_model import Order
-from src.database import get_db_session
-from src.repositories.order_repository import OrderRepository
+from ..repositories.order_repository import OrderRepository
+from ..database import get_db_session
+from ..helpers.order_helper import generate_dummy_orders
 
-router = APIRouter()
-# {"sku": true}
+order_router = APIRouter()
 
 
-@router.post("/order")
+@order_router.post("/")
 def create_order(data: Dict[str, Any]):
     db = get_db_session()
 
@@ -46,7 +45,7 @@ def create_order(data: Dict[str, Any]):
         db.close()
 
 
-@router.get("/order/{order_id}")
+@order_router.get("/{order_id}")
 def get_order_by_id(order_id: str):
     db = get_db_session()
 
@@ -61,16 +60,40 @@ def get_order_by_id(order_id: str):
     finally:
         db.close()
 
-@router.get("/order")
-def get_orders():
+
+@order_router.get("/")
+def get_orders(status: str = None, limit: int = None):
     db = get_db_session()
 
     try:
-        orders = OrderRepository.get_orders(db)
-        return {
-                "message": "Orders retrieved successfully",
-                "orders": [order.to_dict() for order in orders]
-            }
+        orders = OrderRepository.get_orders(db, limit, status)
+        return {"message": "Orders retrieved successfully", "orders": [order.to_dict() for order in orders]}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        db.close()
+
+
+@order_router.post("/preload-database")
+def preload_database(status: str, customer_id: str):
+    # checar si customer_id existe
+    # is_valid = checkIfIdExists(customer_id)
+    # if is_valid == false:
+    db = get_db_session()
+
+    try:
+        dummy_orders = generate_dummy_orders()
+        current_db_orders = OrderRepository.get_orders(db)
+        message = ""
+
+        if len(current_db_orders) == 0:
+            orders = OrderRepository.create_many_orders(db, dummy_orders)
+            message = f"✅ {len(orders)} orders added to database."
+
+        else:
+            message = "Database already has data."
+
+        return {"message": message}
     except Exception as e:
         return {"error": str(e)}
     finally:

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from ..models.order_model import Order
 from datetime import datetime
+from typing import List
+from ..models.order_model import Order
 
 
 class OrderRepository:
@@ -38,10 +39,10 @@ class OrderRepository:
             raise
 
     @staticmethod
-    def get_orders(db: Session, limit: int = 20):
+    def get_orders(db: Session, limit: int = 20, status: str = "on_time") -> List[Order]:
         try:
-            # Obtener todas las órdenes con un límite opcional
-            orders = db.query(Order).limit(limit).all()
+            orders = db.query(Order).filter(Order.status == status).limit(limit).all()
+
             return orders
         except Exception as e:
             print(f"Error retrieving orders: {e}")
@@ -56,4 +57,18 @@ class OrderRepository:
             return order
         except Exception as e:
             print(f"Error retrieving order by ID: {e}")
+            raise
+
+    @staticmethod
+    def create_many_orders(db: Session, orders_data: List[dict]):
+        try:
+            orders = [Order(**order_data) for order_data in orders_data]
+
+            db.add_all(orders)
+            db.commit()
+
+            return orders
+        except Exception as e:
+            db.rollback()
+            print(f"Error bulk writing orders: {e}")
             raise

@@ -39,7 +39,7 @@ deactivate
 ### Generar fake_orders.csv
 
 ```bash
-(venv) python src/scripts/generate_fake_orders.py
+(venv) python src/scripts/generate_dummy_orders.py
 
 ```
 
