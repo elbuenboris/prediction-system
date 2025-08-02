@@ -1,9 +1,10 @@
-from fastapi import APIRouter
-from typing import Dict, Any
-from datetime import datetime
+from fastapi import APIRouter, Query
+from typing import Dict, Any, Optional
+from datetime import datetime, date
 from ..repositories.order_repository import OrderRepository
 from ..database import get_db_session
 from ..helpers.order_helper import generate_dummy_orders
+
 
 order_router = APIRouter()
 
@@ -19,7 +20,7 @@ def create_order(data: Dict[str, Any]):
                 "id": data.get("id"),
                 "sku": data.get("sku"),
                 "part_number": data.get("part_number"),
-                "manufacturer": data.get("manufacturer"),
+                "manufacturer"  : data.get("manufacturer"),
                 "category": data.get("category"),
                 "region": data.get("region"),
                 "customer_id": data.get("customer_id"),
@@ -62,11 +63,24 @@ def get_order_by_id(order_id: str):
 
 
 @order_router.get("/")
-def get_orders(status: str = None, limit: int = None):
+def get_orders(
+    limit: int = Query(20),
+    status: str = Query("on_time"),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    region: Optional[str] = Query(None),
+    category: Optional[str] = Query(None)
+    ):
     db = get_db_session()
+    
+
+    print("start_date param:", start_date)
+    print("region:", region)
+    print("type:", type(start_date))
+
 
     try:
-        orders = OrderRepository.get_orders(db, limit, status)
+        orders = OrderRepository.get_orders(db, limit, status, start_date, end_date, region, category)
         return {"message": "Orders retrieved successfully", "orders": [order.to_dict() for order in orders]}
     except Exception as e:
         return {"error": str(e)}
@@ -75,7 +89,7 @@ def get_orders(status: str = None, limit: int = None):
 
 
 @order_router.post("/preload-database")
-def preload_database(status: str, customer_id: str):
+def preload_database():
     # checar si customer_id existe
     # is_valid = checkIfIdExists(customer_id)
     # if is_valid == false:

@@ -1,7 +1,11 @@
 from sqlalchemy.orm import Session
-from datetime import datetime
+from sqlalchemy import func
+from datetime import datetime, time, date
 from typing import List
 from ..models.order_model import Order
+from typing import Optional
+from datetime import date, time
+
 
 
 class OrderRepository:
@@ -9,7 +13,7 @@ class OrderRepository:
     def create_order(db: Session, order_data: dict) -> Order:
         try:
             # Crear una nueva orden
-            order = Order(
+            order = Order(  
                 id=order_data.get("id"),
                 sku=order_data.get("sku"),
                 part_number=order_data.get("part_number"),
@@ -38,15 +42,126 @@ class OrderRepository:
             print(f"Error creating order: {e}")
             raise
 
-    @staticmethod
-    def get_orders(db: Session, limit: int = 20, status: str = "on_time") -> List[Order]:
-        try:
-            orders = db.query(Order).filter(Order.status == status).limit(limit).all()
+    # @staticmethod
+    # def get_orders(db: Session, limit: int = 20, status: str = "on_time") -> List[Order]:
+    #     try:
+    #         orders = db.query(Order).filter(Order.status == status).limit(limit).all()
 
-            return orders
+    #         return orders
+    #     except Exception as e:
+    #         print(f"Error retrieving orders: {e}")
+    #         raise
+
+
+    # @staticmethod
+    # def get_orders(
+    #     db: Session,
+    #     limit: int = 20,
+    #     status: str = "on_time",
+    #     start_date: Optional[date] = None,
+    #     end_date: Optional[date] = None
+    # ) -> List[Order]:
+    #     try:
+    #         query = db.query(Order).filter(Order.status == status)
+
+    #         if start_date:
+    #             start_datetime = datetime.combine(start_date, time.min)  # 00:00:00
+    #             query = query.filter(Order.required_ship_date >= start_datetime)
+
+    #         if end_date:
+    #             end_datetime = datetime.combine(end_date, time.max)  # 23:59:59.999999
+    #             query = query.filter(Order.required_ship_date <= end_datetime)
+
+    #         query = query.order_by(Order.required_ship_date.asc())
+            
+    #         orders = query.limit(limit).all()
+    #         return orders
+    #     except Exception as e:
+    #         print(f"Error retrieving orders: {e}")
+    #         raise
+
+    @staticmethod
+    def get_orders(
+        db: Session,
+        limit: int = 100,
+        status: str = "on_time",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        region: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> List[Order]:
+        try:
+            query = db.query(Order).filter(Order.status == status)
+            print("Filtered by status:", query.count())
+
+            if region:
+                query = query.filter(func.lower(Order.region) == region.lower())
+                print("Filtered by region:", query.count())
+                
+            query = query.filter(Order.profit_margin_percentage > 30)
+            print("Filtered by margin < 50:", query.count())
+            
+            if category:
+                query = query.filter(func.lower(Order.category) == category.lower())
+                print("Filtered by category", query.count())
+
+            # query = query.filter(Order.actual_delivery_date != None)
+            # query = query.filter(
+            #     func.strftime('%m', Order.actual_delivery_date) == "07",
+            #     func.strftime('%Y', Order.actual_delivery_date) == "2023"
+            # )
+            # print("Filtered by delivery date (Jul 2024):", query.count())
+            query = query.filter(Order.actual_delivery_date != None)
+
+            if start_date:
+                start_datetime = datetime.combine(start_date, time.min)
+                query = query.filter(Order.actual_delivery_date >= start_datetime)
+                print("Filtered by start_date:", query.count())
+
+            if end_date:
+                end_datetime = datetime.combine(end_date, time.max)
+                query = query.filter(Order.actual_delivery_date <= end_datetime)
+                print("Filtered by end_date:", query.count())
+
+            query = query.order_by(Order.actual_delivery_date.asc())\
+            
+            return query.limit(limit).all()
+            #return query.all() 
+
         except Exception as e:
             print(f"Error retrieving orders: {e}")
             raise
+        
+        #     if start_date:
+        #         start_datetime = datetime.combine(start_date, time.min)
+        #         query = query.filter(Order.required_ship_date >= start_datetime)
+
+        #     if end_date:
+        #         end_datetime = datetime.combine(end_date, time.max)
+        #         query = query.filter(Order.required_ship_date <= end_datetime)
+            
+        #     if region:
+        #         query = query.filter(Order.region == region)
+
+        #     # Margen de ganancia < 50
+        #     query = query.filter(Order.profit_margin_percentage < 50)
+
+        #     # Fecha de entrega real: julio 2024 (compat. con SQLite)
+        #     query = query.filter(
+        #         func.strftime('%m', Order.actual_delivery_date) == "07",
+        #         func.strftime('%Y', Order.actual_delivery_date) == "2024"
+        #     )
+
+        #     # Ordenar por fecha de entrega requerida
+        #     query = query.order_by(Order.actual_delivery_date.asc())
+
+        #     orders = query.limit(limit).all()
+        #     return orders
+
+        # except Exception as e:
+        #     print(f"Error retrieving orders: {e}")
+        #     raise
+
 
     @staticmethod
     def get_order_by_id(db: Session, order_id: str) -> Order:
